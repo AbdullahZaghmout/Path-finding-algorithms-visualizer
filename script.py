@@ -1,3 +1,4 @@
+from typing import Iterator
 import pygame,time, math,heapq
 # math library is only used to calculate log2 and sqrt
 # Colors
@@ -160,8 +161,8 @@ class Square:
         self.visited=visited
 
     """returs a list of the adjecant squares that are available (are not obstalces) to the square"""
-    def __lt__(self,other):
-        return self.x < other.x
+    def __lt__(self,other): # So that square objects can be used in tuples in heaps
+        return 0 # doesn't matter, zero is chosen arbtirarly
     def get_neighbours(self):
         neighbours = []
         x = self.x
@@ -256,29 +257,32 @@ class Button:
         if pos[0] > self.x and pos[0] < self.x + self.width and pos[1]>self.y and pos[1]<self.y+self.height:
                 return True
         return False
-
-def manhattan_distance(a,b,iteartion):
-    return abs(a.x-b.x)+abs(a.y-b.y)
-
-def distance_for_unweighted_bfs(a,b,iteration):
+def distance_for_A_star(a,b,iteartion,distance_to_start_square):
+    return abs(a.x-b.x)+abs(a.y-b.y)+distance_to_start_square+iteartion/10**9 # Manhattan distance to finish square + distnace to start square and if two squares have   
+                                                                              # the same total distance take the one that was visited first
+                                        
+def distance_for_unweighted_bfs(a,b,iteration,distance_to_start_square): # Just take the one that was visited first
     return iteration
 
 def BFS(start, finish,updates,animating,distance_funciton=distance_for_unweighted_bfs):
     iteartion=0
-    q=[(distance_funciton(start,finish,iteartion),start)]
+    q=[(distance_funciton(start,finish,iteartion,0),start)]
     heapq.heapify(q)
     start_time=time.time()
     reached_from=[[None for i in range(M)] for i in range(N)]
+    distance_to_start_square=[[10000000 for i in range(M)] for i in range(N)]
     reached_from[start.y][start.x]=start
+    distance_to_start_square[start.y][start.x]=0
     found =False
     while len(q):
         w,cur=heapq.heappop(q)
-        iteartion+=1
         for neighbour in cur.get_neighbours():
+            iteartion+=1
             x=neighbour.x
             y=neighbour.y
             if reached_from[y][x]==None:
                 reached_from[y][x]=cur
+                distance_to_start_square[y][x]=distance_to_start_square[cur.y][cur.x]+1
                 GRID[y][x].visited=True
                 if neighbour==finish:
                     found=True
@@ -289,7 +293,7 @@ def BFS(start, finish,updates,animating,distance_funciton=distance_for_unweighte
                         updates.push(to_update.front())
                         to_update.pop()
                 else: updates.push(Update("color",neighbour.x,neighbour.y,COLOR_OF_VISITED))
-                heapq.heappush(q,(distance_funciton(finish,neighbour,iteartion),neighbour))
+                heapq.heappush(q,(distance_funciton(finish,neighbour,iteartion,distance_to_start_square[y][x]),neighbour))
         if found:
             break        
 
@@ -382,7 +386,7 @@ def start(started,start_square,finish_square,updates,start_button,screen,algorit
     elif algorithm=="BFS":
         BFS(GRID[start_square[1]][start_square[0]],GRID[finish_square[1]][finish_square[0]],updates,True)
     elif algorithm=="A*":
-        BFS(GRID[start_square[1]][start_square[0]],GRID[finish_square[1]][finish_square[0]],updates,True,manhattan_distance)
+        BFS(GRID[start_square[1]][start_square[0]],GRID[finish_square[1]][finish_square[0]],updates,True,distance_for_A_star)
 
 
 def clear(updates,started):
@@ -489,7 +493,7 @@ def find_path_in_real_time(updates,start,finish,algorithm):
     elif algorithm=="DFS":
         DFS(start,start,finish,updates,False)
     elif algorithm=="A*":
-        BFS(start,finish,updates,False,manhattan_distance)
+        BFS(start,finish,updates,False,distance_for_A_star)
     # Resets the colors of squares
     for row in GRID:
         for el in row:
