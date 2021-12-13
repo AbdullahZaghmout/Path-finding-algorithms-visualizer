@@ -19,4 +19,5 @@ men jag tror att vissa funcktioner är typ onödiga som
 7.Ingen hårdkodning. om ett visst värde eller en viss sträng används direkt utan att ha en variabel som pekar på den så avnänds den en gång
 
 8. All användning sker via GUI:t som är intuitiv och lätt att förstå
+
 9.bra variabel namn och namn på funktioner som robberProb setEndService currentTime iterate osv.
